@@ -1,0 +1,65 @@
+# Task 3
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def Total_quantity_sold_each_product(connection):
+    query = """SELECT StockCode, SUM(Quantity) AS TotalQuantity FROM Transactions GROUP BY StockCode ORDER BY TotalQuantity DESC"""
+    df = pd.read_sql_query(query, connection)
+    
+    #Create Bar chart
+    sns.barplot(x=df["StockCode"][:20], y=df["TotalQuantity"][:20]) 
+    plt.xlabel("Stock Code")
+    plt.ylabel("Total Quantity Sold")
+    plt.title("Total Quantity Sold for Each Product")
+    plt.xticks(rotation=90)
+    plt.show()
+
+def Sales_trends_monthly(connection):
+    query ="""SELECT STRFTIME('%Y-%m', InvoiceDate) AS Month, StockCode, (TotalAmount_GBP) AS Total FROM Transactions GROUP BY Month, StockCode ORDER BY Month DESC;"""
+    df = pd.read_sql_query(query, connection)
+    
+    # Filter for only the 10 StockCodes
+    products = df.groupby("StockCode")["Total"].sum().nlargest(10).index
+    df_filtered = df[df["StockCode"].isin(products)]
+    
+    # Create Line Chart
+    sns.lineplot(x="Month", y="Total", hue="StockCode", data=df_filtered)
+    plt.xticks(rotation=45)
+    plt.xlabel("Month")
+    plt.ylabel("Total Sales (GBP)")
+    plt.title(" Product sales trends monthly.")
+    plt.legend(title="StockCode", bbox_to_anchor=(1.05, 1), loc="upper left")
+    plt.show()
+    
+def Top_five_customers(connection):
+    query = """SELECT t.CustomerID, SUM(t.TotalAmount_GBP) AS Total FROM Transactions t JOIN Customers c ON t.CustomerID = c.CustomerID GROUP BY t.CustomerID ORDER BY Total DESC LIMIT 5; """
+    df = pd.read_sql_query(query, connection)
+    
+    #Create Horizontal Bar chart
+    sns.barplot(x=df["Total"], y=df["CustomerID"],orient="h")
+    plt.xlabel("Total Sale(GBP)")
+    plt.ylabel("Customer ID")
+    plt.title("Top 5 Customers by Sales")
+    plt.show()
+
+def Revenue_contribution(connection):
+    query = """SELECT p.StockCode, SUM(t.TotalAmount_GBP) AS Revenue FROM Transactions t JOIN Products p ON t.StockCode = p.StockCode GROUP BY p.StockCode ORDER BY Revenue DESC LIMIT 10;"""
+    df = pd.read_sql_query(query, connection)
+    
+    #Create pie chart
+    StockCode = df['StockCode'].value_counts()
+    plt.pie(df["Revenue"], labels=StockCode.index, autopct="%1.1f%%", colors=sns.color_palette("pastel"))
+    plt.title("Revenue Contribution by Products")
+    plt.show()
+
+
+
+
+
+
+
+    
+    
+
+   
